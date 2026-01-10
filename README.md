@@ -1,13 +1,13 @@
 ![SharpAPI GitHub cover](https://sharpapi.com/sharpapi-github-php-bg.jpg "SharpAPI Node.js Client")
 
-# Proofread & Grammar Checker API for Node.js
+# Proofreader & Grammar Checker API for Node.js
 
-## ✍️ Fix grammar and spelling errors with AI — powered by SharpAPI.
+## 📝 Check grammar and spelling with AI — powered by SharpAPI.
 
 [![npm version](https://img.shields.io/npm/v/@sharpapi/sharpapi-node-proofread.svg)](https://www.npmjs.com/package/@sharpapi/sharpapi-node-proofread)
 [![License](https://img.shields.io/npm/l/@sharpapi/sharpapi-node-proofread.svg)](https://github.com/sharpapi/sharpapi-node-client/blob/master/LICENSE.md)
 
-**SharpAPI Proofread & Grammar Checker** uses advanced AI to detect and correct grammar, spelling, punctuation, and style errors. Perfect for content creation, document editing, and quality assurance.
+**SharpAPI Proofreader** checks your text for grammar, spelling, punctuation, and style issues. Provides detailed corrections and suggestions to improve your writing quality.
 
 ---
 
@@ -18,7 +18,10 @@
 3. [Usage](#usage)
 4. [API Documentation](#api-documentation)
 5. [Examples](#examples)
-6. [License](#license)
+6. [Use Cases](#use-cases)
+7. [API Endpoint](#api-endpoint)
+8. [Related Packages](#related-packages)
+9. [License](#license)
 
 ---
 
@@ -51,30 +54,23 @@ const { SharpApiProofreadService } = require('@sharpapi/sharpapi-node-proofread'
 const apiKey = process.env.SHARP_API_KEY; // Store your API key in environment variables
 const service = new SharpApiProofreadService(apiKey);
 
-const text = `
-This is a sentance with some erors that need to be fixed.
-Their are several gramatical mistakes in this text.
-`;
+const text = 'This text has some erors that need fixing.';
 
-async function proofreadText() {
+async function processText() {
   try {
-    // Submit proofreading job
+    // Submit processing job
     const statusUrl = await service.proofread(text);
     console.log('Job submitted. Status URL:', statusUrl);
 
     // Fetch results (polls automatically until complete)
     const result = await service.fetchResults(statusUrl);
-    const corrections = result.getResultJson();
-
-    console.log('Original:', text);
-    console.log('Corrected:', corrections.corrected_text);
-    console.log('Errors found:', corrections.errors.length);
+    console.log('Result:', result.getResultJson());
   } catch (error) {
     console.error('Error:', error.message);
   }
 }
 
-proofreadText();
+processText();
 ```
 
 ---
@@ -83,162 +79,51 @@ proofreadText();
 
 ### Methods
 
-#### `proofread(text: string, language?: string): Promise<string>`
-
-Proofreads text and returns corrections for grammar, spelling, and punctuation errors.
+The service provides methods for processing content asynchronously. All methods return a status URL for polling results.
 
 **Parameters:**
-- `text` (string, required): The text content to proofread
-- `language` (string, optional): The language of the text (default: 'English')
+- `content` (string, required): The content to process
+- `language` (string, optional): Output language
+- `voice_tone` (string, optional): Desired tone (e.g., professional, casual)
+- `context` (string, optional): Additional context for better results
 
-**Returns:**
-- Promise<string>: Status URL for polling the job result
-
-**Example:**
-```javascript
-const statusUrl = await service.proofread(textWithErrors, 'English');
-const result = await service.fetchResults(statusUrl);
-```
+For complete API specifications, see the [Postman Documentation](https://documenter.getpostman.com/view/31106842/2sBXVeGsVi).
 
 ### Response Format
 
-The API returns corrected text with detailed error information:
-
-```json
-{
-  "corrected_text": "This is a sentence with some errors that need to be fixed. There are several grammatical mistakes in this text.",
-  "errors": [
-    {
-      "error": "sentance",
-      "correction": "sentence",
-      "type": "spelling",
-      "position": 10,
-      "explanation": "Incorrect spelling"
-    },
-    {
-      "error": "erors",
-      "correction": "errors",
-      "type": "spelling",
-      "position": 30,
-      "explanation": "Incorrect spelling"
-    },
-    {
-      "error": "Their",
-      "correction": "There",
-      "type": "grammar",
-      "position": 60,
-      "explanation": "Wrong usage of 'their' vs 'there'"
-    }
-  ],
-  "error_count": 3
-}
-```
+The API returns structured JSON data. Response format varies by endpoint - see documentation for details.
 
 ---
 
 ## Examples
 
-### Basic Proofreading
+### Basic Example
 
 ```javascript
 const { SharpApiProofreadService } = require('@sharpapi/sharpapi-node-proofread');
 
 const service = new SharpApiProofreadService(process.env.SHARP_API_KEY);
 
-const draft = `
-I has been working on this project for three weeks.
-Its going very good and we should be done soon.
-`;
+// Customize polling behavior if needed
+service.setApiJobStatusPollingInterval(10);  // Poll every 10 seconds
+service.setApiJobStatusPollingWait(180);     // Wait up to 3 minutes
 
-service.proofread(draft)
-  .then(statusUrl => service.fetchResults(statusUrl))
-  .then(result => {
-    const corrections = result.getResultJson();
-    console.log('✏️ Corrected text:');
-    console.log(corrections.corrected_text);
-    console.log(`\n🔍 Found ${corrections.error_count} errors`);
-  })
-  .catch(error => console.error('Proofreading failed:', error));
+// Use the service
+// ... (implementation depends on specific service)
 ```
 
-### Detailed Error Analysis
-
-```javascript
-const service = new SharpApiProofreadService(process.env.SHARP_API_KEY);
-
-const document = `
-The company annouced their new product line yesterday.
-We recieved alot of positive feedback from customers.
-`;
-
-const statusUrl = await service.proofread(document);
-const result = await service.fetchResults(statusUrl);
-const corrections = result.getResultJson();
-
-console.log('Error Report:');
-corrections.errors.forEach((error, index) => {
-  console.log(`\n${index + 1}. ${error.type.toUpperCase()}`);
-  console.log(`   Error: "${error.error}"`);
-  console.log(`   Correction: "${error.correction}"`);
-  console.log(`   Explanation: ${error.explanation}`);
-});
-```
-
-### Batch Proofreading
-
-```javascript
-const service = new SharpApiProofreadService(process.env.SHARP_API_KEY);
-
-const articles = [
-  { title: 'Article 1', content: 'Your text here...' },
-  { title: 'Article 2', content: 'More text...' },
-  { title: 'Article 3', content: 'Even more text...' }
-];
-
-const proofreadResults = await Promise.all(
-  articles.map(async (article) => {
-    const statusUrl = await service.proofread(article.content);
-    const result = await service.fetchResults(statusUrl);
-    const corrections = result.getResultJson();
-
-    return {
-      title: article.title,
-      original: article.content,
-      corrected: corrections.corrected_text,
-      error_count: corrections.error_count
-    };
-  })
-);
-
-proofreadResults.forEach(result => {
-  console.log(`${result.title}: ${result.error_count} errors corrected`);
-});
-```
+For more examples, visit the [Product Page](https://sharpapi.com/en/catalog/ai/content-marketing-automation/proofread-grammar-checker).
 
 ---
 
 ## Use Cases
 
-- **Content Creation**: Ensure error-free blog posts, articles, and marketing copy
-- **Email Communication**: Polish professional emails and messages
-- **Academic Writing**: Improve essays, papers, and research documents
-- **Business Documents**: Perfect reports, proposals, and presentations
-- **Social Media**: Check posts for grammar and spelling before publishing
-- **E-commerce**: Ensure product descriptions are error-free
-- **Customer Support**: Validate support responses for clarity and correctness
-
----
-
-## Detection Capabilities
-
-The proofreader identifies various types of errors:
-
-- **Spelling errors**: Typos, misspelled words
-- **Grammar mistakes**: Subject-verb agreement, tense errors
-- **Punctuation**: Missing or incorrect punctuation marks
-- **Capitalization**: Proper noun capitalization, sentence starts
-- **Word choice**: Commonly confused words (their/there/they're)
-- **Style issues**: Redundancy, wordiness, clarity problems
+- **Content Quality**: Ensure error-free blog posts and articles
+- **Email Composition**: Check emails before sending
+- **Document Review**: Proofread reports and documentation
+- **E-commerce**: Quality check product descriptions
+- **Customer Support**: Verify response quality
+- **Academic Writing**: Check essays and research papers
 
 ---
 
@@ -247,17 +132,16 @@ The proofreader identifies various types of errors:
 **POST** `/content/proofread`
 
 For detailed API specifications, refer to:
-- [Postman Documentation](https://documenter.getpostman.com/view/31106842/2sBXVeGsVc)
+- [Postman Documentation](https://documenter.getpostman.com/view/31106842/2sBXVeGsVi)
 - [Product Page](https://sharpapi.com/en/catalog/ai/content-marketing-automation/proofread-grammar-checker)
 
 ---
 
 ## Related Packages
 
-- [@sharpapi/sharpapi-node-paraphrase](https://www.npmjs.com/package/@sharpapi/sharpapi-node-paraphrase) - Text paraphrasing
-- [@sharpapi/sharpapi-node-translate](https://www.npmjs.com/package/@sharpapi/sharpapi-node-translate) - Text translation
-- [@sharpapi/sharpapi-node-summarize-text](https://www.npmjs.com/package/@sharpapi/sharpapi-node-summarize-text) - Text summarization
-- [@sharpapi/sharpapi-node-client](https://www.npmjs.com/package/@sharpapi/sharpapi-node-client) - Full SharpAPI SDK
+- [@sharpapi/sharpapi-node-paraphrase](https://www.npmjs.com/package/@sharpapi/sharpapi-node-paraphrase)
+- [@sharpapi/sharpapi-node-translate](https://www.npmjs.com/package/@sharpapi/sharpapi-node-translate)
+- [@sharpapi/sharpapi-node-summarize-text](https://www.npmjs.com/package/@sharpapi/sharpapi-node-summarize-text)
 
 ---
 
